@@ -48,6 +48,17 @@
             "console": "integratedTerminal",
             "justMyCode": false
         }, {
+            "name": "Python: Validate Report Plug-In",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/aac/__main__.py",
+            "args": [
+                "validate",
+                "${workspaceFolder}/src/aac/plugins/report/report.yaml"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },{
             "name": "Python: Validate EchoService",
             "type": "python",
             "request": "launch",
