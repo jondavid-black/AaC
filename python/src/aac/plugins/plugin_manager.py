@@ -36,6 +36,7 @@ def get_plugin_manager() -> PluginManager:
         help_dump,
         material_model,
         rest_api,
+        report,
     )
 
     # Import Validation Plugins
@@ -67,6 +68,7 @@ def get_plugin_manager() -> PluginManager:
     plugin_manager.register(material_model)
     plugin_manager.register(help_dump)
     plugin_manager.register(rest_api)
+    plugin_manager.register(report)
 
     # register "built-in" commands
     plugin_manager.register(validate)

@@ -51,6 +51,27 @@ def get_definitions_by_root_key(root_key: str, definitions: list[Definition]) ->
     return list(filter(does_definition_root_match, definitions))
 
 
+def get_definitions_by_source_uri(source_uri: str, definitions: list[Definition]) -> list[Definition]:
+    """Return a subset of definitions with the given root key.
+
+    The aac.parser.parse() function returns a dict of all parsed types.  Sometimes it is
+    useful to only work with the contents of a certain file (i.e. model or schema).  This utility
+    method allows a setup of parsed definitions to be "filtered" to a specific source_uri.
+
+    Args:
+        source_uri (str): The source_uri key to filter on.
+        definitions (list[Definition]): The list of parsed definitions to search.
+
+    Returns:
+        A list of ParedDefinitions with the given root key AaC model definitions.
+    """
+
+    def does_definition_source_uri_match(definition: Definition) -> bool:
+        return source_uri == definition.source_uri
+
+    return list(filter(does_definition_source_uri_match, definitions))
+
+
 def get_definition_by_name(definition_name: str, definitions: list[Definition]) -> Optional[Definition]:
     """Return a definition with a matching name from a list of definitions.
 

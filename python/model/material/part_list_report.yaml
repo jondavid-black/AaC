@@ -1,0 +1,21 @@
+import:
+  - ./amazon_parts.yaml
+  - ./apartment_provided.yaml
+  - ./furniture_store.yaml
+
+report:
+  name: Parts List
+  description: A list of all parts for the apartment.
+  data:
+    - name: part make
+      description: The vendor of the part.
+      source: part.make
+    - name: part model
+      description: The manufacturer model identifier.
+      source: part.model
+    - name: part unit cost
+      description: What the part costs.
+      source: part.unit_cost
+    - name: part description
+      description: The manufacturer description of the part.
+      source: part.description
