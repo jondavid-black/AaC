@@ -1,0 +1,109 @@
+model:
+  name: report
+  description: report is an Architecture-as-Code plugin that allows the user to define and generate reports from a model.
+  behavior:
+    - name: report
+      type: command
+      description: Generate YAML output from an Arch-as-Code report definition.
+      input:
+        - name: report_definition_file
+          type: string
+          python_type: str
+          description: The yaml file containing the report model.
+        - name: architecture_file
+          type: string
+          python_type: str
+          description: The yaml file containing the AaC model to interrogate.
+        - name: --output_file
+          type: string
+          python_type: str
+          description: The file to write the generated YAML report. (Optional)
+      acceptance:
+        - scenario: Output YAML report data as defined in the input report model.
+          given:
+            - The {{model(name=report).behavior(name=report).input(name=report_definition_file)}} contains a valid report definition.
+            - The {{model(name=report).behavior(name=report).input(name=architecture_file)}} contains a valid AaC model.
+            - The The {{model(name=report).behavior(name=report).input(name=output_file)}} contains a valid file path.
+          when:
+            - The aac app is run with the report command.
+          then:
+            - YAML is written to {{model(name=report).behavior(name=report).input(name=output_file)}}.
+    - name: report-csv
+      type: command
+      description: Generate CSV output from an Arch-as-Code report definition.
+      input:
+        - name: report_definition_file
+          type: string
+          python_type: str
+          description: The yaml file containing the report model.
+        - name: architecture_file
+          type: string
+          python_type: str
+          description: The yaml file containing the AaC model to interrogate.
+        - name: --output_file
+          type: string
+          python_type: str
+          description: The file to write the generated CSV report. (Optional)
+      acceptance:
+        - scenario: Output CSV report data as defined in the input report model.
+          given:
+            - The {{model(name=report).behavior(name=report).input(name=report_definition_file)}} contains a valid report definition.
+            - The {{model(name=report).behavior(name=report).input(name=architecture_file)}} contains a valid AaC model.
+            - The The {{model(name=report).behavior(name=report).input(name=output_file)}} contains a valid file path.
+          when:
+            - The aac app is run with the report-csv command.
+          then:
+            - CSV is written to {{model(name=report).behavior(name=report).input(name=output_file)}}.
+            - First line of file is report field names as a header line.
+---
+schema:
+  name: Report
+  description: A report definition for interrogating AaC models.
+  fields:
+    - name: name
+      type: string
+      description: The title of the report.
+    - name: description
+      type: string
+      description: A description of the report.
+    - name: data
+      type: DataField[]
+      description: Report fields taken directly from data model fields.
+  validation:
+    - name: Required fields are present
+      arguments:
+        - name
+        - data
+---
+schema:
+  name: DataField
+  description: Defines a report field value which is taken directly from an AaC data model.
+  fields:
+    - name: name
+      type: string
+      description: The name of the report field.  This may be used as the column heading in a report.
+    - name: description
+      type: string
+      description: A description of the report field.
+    - name: source
+      type: reference
+      description: A reference to the data location in the model.
+    - name: order
+      type: int
+      description: Optional field defining the sequence in which the data field should be formatted in a report.
+  validation:
+    - name: Required fields are present
+      arguments:
+        - name
+        - source
+    - name: Reference format valid
+      arguments:
+        - source
+---
+ext:
+   name: addReportToRoot
+   type: root
+   schemaExt:
+      add:
+        - name: report
+          type: Report

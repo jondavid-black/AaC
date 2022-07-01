@@ -2,7 +2,7 @@ validation:
   name: Reference format valid
   description: Verifies every field declared as reference is properly formatted for processing
   behavior:
-    - name: Verify that reference fields properly formatted.
+    - name: Reference format valid
       type: request-response
       description:
       input:
