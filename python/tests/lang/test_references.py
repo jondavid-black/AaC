@@ -1,7 +1,12 @@
 from unittest import TestCase
 
 from aac.lang.active_context_lifecycle_manager import get_active_context
-from aac.lang.references import get_definition_type_references_from_list, is_reference_format_valid, get_reference_target_definitions, _drill_into_nested_dict
+from aac.lang.references import (
+    get_definition_type_references_from_list,
+    is_reference_format_valid,
+    get_reference_target_definitions,
+    _drill_into_nested_dict,
+    _get_ref_value_from_dict)
 from aac.parser import parse
 
 from tests.helpers.parsed_definitions import create_schema_definition, create_schema_ext_definition, create_field_entry, create_model_definition
@@ -122,6 +127,14 @@ class TestLangReferences(TestCase):
         search_keys = ["root", "b", "e"]
         expected_result = [{"f": "f"}]
         self.assertListEqual(_drill_into_nested_dict(search_keys, nested_dict), expected_result)
+
+    def test_get_ref_value_from_dict(self):
+        nested_dict = {"root": {"a": "a", "b": {"c": "c", "d": "d", "e": {"f": "f"}}}}
+        segments = ["root(a=a)", "b(c=c)", "e", "f"]
+        expected_result = "f"
+        result = _get_ref_value_from_dict(segments, nested_dict)
+        print(f"result = {result}")
+        self.assertEqual(result, expected_result)
 
 
 TEST_MODEL_WITH_NON_STRING_VALUE = """

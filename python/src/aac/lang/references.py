@@ -1,4 +1,5 @@
 """Module for AaC Language functions related to definition references."""
+from typing import Any
 
 from aac.lang.language_context import LanguageContext
 from aac.lang.definitions.definition import Definition
@@ -78,6 +79,49 @@ def is_reference_format_valid(reference_field_value: str = None) -> tuple[bool, 
 def _has_disallowed_characters(test_me: str) -> bool:
     disallowed = set("~`!@#$%^&*()=+\\|[]{}'\";:/?,.<> ")
     return any((c in disallowed) for c in test_me)
+
+
+def get_reference_target_value_from_list(reference_field_value: str, definition_list: list[Definition]) -> Any:
+    """Get values from the reference_field_value from definitions in the definition_list."""
+    return [get_reference_target_value(reference_field_value, definition) for definition in definition_list]
+
+
+def get_reference_target_value(reference_field_value: str, definition: Definition) -> Any:
+    """Get value from the reference_field_value from a definition."""
+
+    return _get_ref_value_from_dict(reference_field_value.split('.'), definition.structure)
+
+
+def _get_ref_value_from_dict(segments: list[str], search_me: dict) -> Any:
+    """Traverse the dict, applying selectors along the way, and return any target value found."""
+
+    print(f"_get_ref_val_from_dict({segments}, {search_me}")
+    if len(segments) == 0:
+        # there are no more segments to search, so return the "found" value
+        return search_me
+
+    key, selector, selector_field, selector_value = _get_reference_segment_content(segments[0])
+    if key not in search_me:
+        return None
+
+    if selector:
+        value_for_key = search_me["key"]
+        if type(value_for_key) is list:
+            for item in value_for_key:
+                if type(item) is dict:
+                    # recurse into the next layer of the dict
+                    return _get_ref_value_from_dict(segments[1:], item)
+                else:
+                    # there's a non-dict item in the list
+                    print("What should this be?  Need to think through it!!!")  # TODO
+
+        if type(value_for_key) is dict:
+            # recurse into the next layer of the dict
+            return _get_ref_value_from_dict(segments[1:], value_for_key)
+
+    # TODO  what do we do if there's not a selector?
+    
+    return None
 
 
 def get_reference_target_definitions(reference_field_value: str, language_context: LanguageContext) -> list[Definition]:

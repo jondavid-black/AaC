@@ -92,24 +92,27 @@ def _generate_report(report_file: str, architecture_file: str) -> dict:
         # get reports defined in the report file
         report_defs = get_definitions_by_root_key("report", get_definitions_by_source_uri(report_file, report_result.definitions))
 
-    print(f"report_defs = {[entry.name for entry in report_defs]}")
+        print(f"report_defs = {[entry.name for entry in report_defs]}")
 
-    for report_def in report_defs:  # TODO fix magic string
-        report_result = {}
-        fields = report_def.get_fields()
+        for report_def in report_defs:  # TODO fix magic string
+            report_result = {}
+            fields = report_def.get_fields()
 
-        # get report result metadata
-        report_result["title"] = fields["name"]  # TODO fix magic string
-        report_result["description"] = fields["description"]  # TODO fix magic string
+            # get report result metadata
+            report_result["title"] = fields["name"]  # TODO fix magic string
+            report_result["description"] = fields["description"]  # TODO fix magic string
 
-        # get data types to extract report content from
-        source_refs = []
-        things_to_get = fields["data"]  # TODO fix magic string
-        for get_me in things_to_get:
-            source_refs.append(get_me["source"]  # TODO fix magic string)
-        source_types = set(source_types)
+            # get data content
+            content = []
 
-        report_results.append(report_result)
+            for get_me in fields["data"]:
+                column_name = get_me["name"]
+                column_desc = get_me["description"]
+                column_value = get_me["source"]  # TODO fix magic string)
+
+            report_result["content"] = content
+
+            report_results.append(report_result)
 
     with validated_source(architecture_file) as validation_result:
         definitions_as_dictionary = convert_parsed_definitions_to_dict_definition(validation_result.definitions)
