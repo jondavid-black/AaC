@@ -131,10 +131,79 @@ class TestLangReferences(TestCase):
     def test_get_ref_value_from_dict(self):
         nested_dict = {"root": {"a": "a", "b": {"c": "c", "d": "d", "e": {"f": "f"}}}}
         segments = ["root(a=a)", "b(c=c)", "e", "f"]
-        expected_result = "f"
+        expected_result = ["f"]
         result = _get_ref_value_from_dict(segments, nested_dict)
-        print(f"result = {result}")
-        self.assertEqual(result, expected_result)
+        self.assertListEqual(result, expected_result)
+
+    def test_get_ref_value_from_dict_multivalue(self):
+        nested_dict = {"root": {"a": "a", "b": {"c": "c", "d": "d", "e": [{"f": "f1"}, {"f": "f2"}, {"f": "f3"}, {"f": "f4"}]}}}
+        segments = ["root(a=a)", "b(c=c)", "e", "f"]
+        expected_result = ["f1", "f2", "f3", "f4"]
+        result = _get_ref_value_from_dict(segments, nested_dict)
+        self.assertListEqual(result, expected_result)
+
+    def test_get_ref_value_from_dict_multipath(self):
+        nested_dict = {"root": {"a": "a", "b": [{"c": "c", "d": "d", "e": {"f": "f"}}, {"c": "c", "x": "x", "y": {"z": "z"}}]}}
+        segments = ["root(a=a)", "b(c=c)", "e", "f"]
+        expected_result = ["f"]
+        result = _get_ref_value_from_dict(segments, nested_dict)
+        self.assertListEqual(result, expected_result)
+
+    def test_get_ref_value_root_not_found(self):
+        nested_dict = {"root": {"a": "a", "b": {"c": "c", "d": "d", "e": {"f": "f"}}}}
+        segments = ["not_root(a=a)", "b(c=c)", "x", "f"]
+        expected_result = []
+        result = _get_ref_value_from_dict(segments, nested_dict)
+        self.assertListEqual(result, expected_result)
+
+    def test_get_ref_value_middle_not_found(self):
+        nested_dict = {"root": {"a": "a", "b": {"c": "c", "d": "d", "e": {"f": "f"}}}}
+        segments = ["root(a=a)", "b(c=c)", "x", "f"]
+        expected_result = []
+        result = _get_ref_value_from_dict(segments, nested_dict)
+        self.assertListEqual(result, expected_result)
+
+    def test_get_ref_value_last_not_found(self):
+        nested_dict = {"root": {"a": "a", "b": {"c": "c", "d": "d", "e": {"f": "f"}}}}
+        segments = ["root(a=a)", "b(c=c)", "e", "z"]
+        expected_result = []
+        result = _get_ref_value_from_dict(segments, nested_dict)
+        self.assertListEqual(result, expected_result)
+
+    def test_get_ref_value_is_a_dict(self):
+        nested_dict = {"root": {"a": "a", "b": {"c": "c", "d": "d", "e": {"f": "f"}}}}
+        segments = ["root(a=a)", "b(c=c)", "e"]
+        expected_result = [{"f": "f"}]
+        result = _get_ref_value_from_dict(segments, nested_dict)
+        self.assertListEqual(result, expected_result)
+
+    def test_get_ref_value_is_a_list(self):
+        nested_dict = {"root": {"a": "a", "b": {"c": "c", "d": "d", "e": [{"f": "f"}, {"g": "g"}]}}}
+        segments = ["root(a=a)", "b(c=c)", "e"]
+        expected_result = [[{"f": "f"}, {"g": "g"}]]
+        result = _get_ref_value_from_dict(segments, nested_dict)
+        self.assertListEqual(result, expected_result)
+
+    def test_get_ref_value_is_a_list_of_list(self):
+        nested_dict = {"root": {"a": "a", "b": [{"c": "c", "d": "d", "e": [{"f": "f"}, {"g": "g"}]}, {"c": "c", "x": "x", "e": [{"y": "y"}, {"z": "z"}]}]}}
+        segments = ["root(a=a)", "b(c=c)", "e"]
+        expected_result = [[{"f": "f"}, {"g": "g"}], [{"y": "y"}, {"z": "z"}]]
+        result = _get_ref_value_from_dict(segments, nested_dict)
+        self.assertListEqual(result, expected_result)
+
+    def test_get_ref_value_is_a_selected_list(self):
+        nested_dict = {"root": {"a": "a", "b": [{"c": "no match", "d": "d", "e": [{"f": "f"}, {"g": "g"}]}, {"c": "c", "x": "x", "e": [{"y": "y"}, {"z": "z"}]}]}}
+        segments = ["root(a=a)", "b(c=c)", "e"]
+        expected_result = [[{"y": "y"}, {"z": "z"}]]
+        result = _get_ref_value_from_dict(segments, nested_dict)
+        self.assertListEqual(result, expected_result)
+
+    def test_get_ref_value_selector_on_last_segment(self):
+        nested_dict = {"root": {"a": "a", "b": [{"c": "no match", "d": "d", "e": [{"f": "f"}, {"g": "g"}]}, {"c": "c", "x": "x", "e": [{"y": "y"}, {"z": "z"}]}]}}
+        segments = ["root(a=a)", "b(c=c)", "e(y=y)"]
+        expected_result = [{"y": "y"}]
+        result = _get_ref_value_from_dict(segments, nested_dict)
+        self.assertListEqual(result, expected_result)
 
 
 TEST_MODEL_WITH_NON_STRING_VALUE = """

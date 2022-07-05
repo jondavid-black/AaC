@@ -81,47 +81,122 @@ def _has_disallowed_characters(test_me: str) -> bool:
     return any((c in disallowed) for c in test_me)
 
 
-def get_reference_target_value_from_list(reference_field_value: str, definition_list: list[Definition]) -> Any:
+def get_reference_target_value_from_list(reference_field_value: str, definition_list: list[Definition]) -> list[Any]:
     """Get values from the reference_field_value from definitions in the definition_list."""
+
     return [get_reference_target_value(reference_field_value, definition) for definition in definition_list]
 
 
-def get_reference_target_value(reference_field_value: str, definition: Definition) -> Any:
+def get_reference_target_value(reference_field_value: str, definition: Definition) -> list[Any]:
     """Get value from the reference_field_value from a definition."""
 
     return _get_ref_value_from_dict(reference_field_value.split('.'), definition.structure)
 
 
-def _get_ref_value_from_dict(segments: list[str], search_me: dict) -> Any:
+def _get_ref_value_from_dict(segments: list[str], search_me: dict) -> list[Any]:
     """Traverse the dict, applying selectors along the way, and return any target value found."""
-
-    print(f"_get_ref_val_from_dict({segments}, {search_me}")
-    if len(segments) == 0:
-        # there are no more segments to search, so return the "found" value
-        return search_me
 
     key, selector, selector_field, selector_value = _get_reference_segment_content(segments[0])
     if key not in search_me:
-        return None
+        return []
 
-    if selector:
-        value_for_key = search_me["key"]
-        if type(value_for_key) is list:
-            for item in value_for_key:
-                if type(item) is dict:
-                    # recurse into the next layer of the dict
-                    return _get_ref_value_from_dict(segments[1:], item)
-                else:
-                    # there's a non-dict item in the list
-                    print("What should this be?  Need to think through it!!!")  # TODO
+    value_for_key = search_me[key]
+    if len(segments) == 1:
+        # this is the deepest point of our search and we have an item for the segment key
+        return _get_ref_value_process_last_segment(segments[0], search_me)
 
-        if type(value_for_key) is dict:
+    # search deeper
+    if type(value_for_key) is list:
+        return _get_ref_value_process_list_with_segments(segments, search_me)
+
+    elif type(value_for_key) is dict:
+        # recurse into the next layer of the dict
+        return _get_ref_value_process_dict_with_segments(segments, search_me)
+
+    else:
+        # this is a value
+        if selector:
+            # since we have a value but a selector is present which cannot be applied, this is not a match
+            return []
+        elif len(segments) > 1:
+            # since we have a value but segments remain, this is not a match
+            return []
+        else:
+            # since we have a value, there is no selector, and there are no more segments, this is a match
+            return [value_for_key]
+
+
+def _get_ref_value_process_last_segment(segment, search_me):
+    key, selector, selector_field, selector_value = _get_reference_segment_content(segment)
+    value_for_key = search_me[key]
+    if not selector:
+        return [value_for_key]
+    elif type(value_for_key) is dict:
+        # there is a selector and the value is a dict
+        if selector_field in value_for_key.keys() and selector_value == value_for_key[selector_field]:
+            return [value_for_key]
+        else:
+            return []
+
+    elif type(value_for_key) is list:
+        # there is a selector and the value is a list
+        if len(value_for_key) > 0 and type(value_for_key[0]) is dict:
+            # the list has content and that content is a dict, so see if the selector applies to any of the content
+            found = []
+            for value in value_for_key:
+                if selector_field in value.keys() and selector_value == value[selector_field]:
+                    found.append(value)
+            return found
+        else:
+            return []
+    else:
+        # there is a selector and the value is not a dict or list
+        return []
+
+
+def _get_ref_value_process_list_with_segments(segments: list[str], search_me: dict) -> list[Any]:
+    key, selector, selector_field, selector_value = _get_reference_segment_content(segments[0])
+    value_for_key = search_me[key]
+
+    next_level_items = []
+    for item in value_for_key:
+        if type(item) is dict:
             # recurse into the next layer of the dict
-            return _get_ref_value_from_dict(segments[1:], value_for_key)
+            if selector:
+                if selector_field in item.keys() and selector_value == item[selector_field]:
+                    next_level_items.append(item)
+            else:
+                next_level_items.append(item)
+        else:
+            # there's a non-dict item so it must be a list or a value
+            # a value could be what we're searching for if there are not more segments and there is no selector
+            if type(item) is not list and type(item) is not dict and len(segments) == 1 and not selector:
+                return [item]
 
-    # TODO  what do we do if there's not a selector?
-    
-    return None
+            if type(item) is list:
+                # is this even possible?  a list of lists doesn't really make sense for an AaC definition
+                print("How did we get here? This implies there is a way to define a list of lists with no intermediary named field in AaC.  I don't think this is possible.")
+
+    ret_val = []
+    for next in next_level_items:
+        result = _get_ref_value_from_dict(segments[1:], next)
+        ret_val.extend(result)
+
+    return ret_val
+
+
+def _get_ref_value_process_dict_with_segments(segments: list[str], search_me: dict) -> list[Any]:
+    key, selector, selector_field, selector_value = _get_reference_segment_content(segments[0])
+    value_for_key = search_me[key]
+    if selector:
+        if selector_field in value_for_key and selector_value == value_for_key[selector_field]:
+            return _get_ref_value_from_dict(segments[1:], value_for_key)
+        else:
+            # no match found for selector
+            return []
+    else:
+        # drill into the next level of the dict
+        return _get_ref_value_from_dict(segments[1:], value_for_key)
 
 
 def get_reference_target_definitions(reference_field_value: str, language_context: LanguageContext) -> list[Definition]:
