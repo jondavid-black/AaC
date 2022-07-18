@@ -23,3 +23,5 @@ node_modules
 .ropeproject/
 
 aac.log
+AaC_OpenAPI_Schema.json
+generated/

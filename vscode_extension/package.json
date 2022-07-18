@@ -81,6 +81,11 @@
                 "command": "aac.execute",
                 "title": "Execute AaC Command",
                 "category": "AaC"
+            },
+            {
+                "command": "aac.visualEditor.new",
+                "title": "Open Definition in Visual Editor",
+                "category": "AaC"
             }
         ],
         "languages": [
@@ -103,7 +108,44 @@
                 "language": "aac",
                 "scopeName": "injection.aac.keywords",
                 "path": "./syntaxes/keywords.tmLanguage.plist",
-                "injectTo": ["source.yaml"]
+                "injectTo": [
+                    "source.yaml"
+                ]
+            }
+        ],
+        "viewsContainers": {
+            "activitybar": [
+                {
+                    "id": "aac-visual-editor",
+                    "title": "AaC Visual Explorer",
+                    "icon": "src/resources/tablet-draw.svg"
+                }
+            ]
+        },
+        "views": {
+            "aac-visual-editor": [
+                {
+                    "id": "definitions-in-context",
+                    "name": "Definitions in the Active Context"
+                }
+            ]
+        },
+        "viewsWelcome": [
+            {
+                "view": "aac-visual-editor",
+                "contents": "You can have paragraphs of text here. You can have [links](https://code.visualstudio.com) to external sources or [internal commands](command:welcome-view-content-sample.hello).\nUse new lines to have new paragraphs.\nPlace a link alone in a paragraph to make it a button\n[Hello](command:welcome-view-content-sample.hello)"
+            }
+        ],
+        "customEditors": [
+            {
+                "viewType": "aac.visualEditor",
+                "displayName": "Edit AaC Definitions",
+                "selector": [
+                    {
+                        "filenamePattern": "*.aac"
+                    }
+                ],
+                "priority": "default"
             }
         ]
     },
@@ -118,9 +160,11 @@
         "pretest": "yarn run compile && yarn run lint",
         "lint": "eslint src --ext ts",
         "test": "node ./out/test/runTest.js",
-        "package": "vsce package --yarn -o aac.vsix"
+        "package": "vsce package --yarn -o aac.vsix",
+        "generate:rest_api": "yarn openapi-generator-cli generate -i ../AaC_OpenAPI_Schema.json -o src/requests/generated/aac_rest_api -g typescript-fetch --additional-properties=supportsES6=true,npmVersion=6.9.0,typescriptThreePlus=true"
     },
     "devDependencies": {
+        "@openapitools/openapi-generator-cli": "^2.5.1",
         "@types/glob": "^7.2.0",
         "@types/mocha": "^9.0.0",
         "@types/node": "14.x",
@@ -139,6 +183,8 @@
         "vsce": "^2.6.4"
     },
     "dependencies": {
+        "@json-editor/json-editor": "^2.8.0",
+        "node-fetch": "^2.6.0",
         "vscode-languageclient": "^7.0.0"
     }
 }
